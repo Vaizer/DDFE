@@ -57,7 +57,7 @@ Screen enables on short press
 - https://www.drive2.ru/l/721407721999439468/
 
 
-Also check Volvo-P2-informer by drPioneer, inspired by my project: https://github.com/drpioneer/Volvo-P2-informer.\ Same hardware, sketch for FL (XC90 2011)
+Also check Volvo-P2-informer by drPioneer, inspired by my project: https://github.com/drpioneer/Volvo-P2-informer </br> Same hardware, sketch for FL (XC90 2011)
 
 Volvo-DDD by vtl: https://github.com/vtl/volvo-ddd
 
