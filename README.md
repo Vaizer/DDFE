@@ -28,6 +28,7 @@ For now **MY2003-2004 is not guaranteed to work** as I don't have correct IDs or
 - Long-term fuel trim (LTFT) (High)
 - Short-term fuel trim (STFT)
 - Misfire counter
+
 **Gearbox (TCM):**
 - ATF temperature
 
@@ -59,3 +60,6 @@ Screen enables on short press
 Also check Volvo-P2-informer by drPioneer, inspired by my project: https://github.com/drpioneer/Volvo-P2-informer.\ Same hardware, sketch for FL (XC90 2011)
 
 Volvo-DDD by vtl: https://github.com/vtl/volvo-ddd
+
+
+Not a native english-speaker, not a programmer - sorry for mistakes.
