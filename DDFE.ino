@@ -164,24 +164,24 @@ void setup() {
   shieldInit();
 //  Serial.println("All Shields init ok!");
 
-  screenEnabler();                              // Включение и очистка дисплея
-  printOnLCD(CREDITS);                          // Вывод на экран приветствия
+  screenEnabler();                            	// Включение и очистка дисплея
+  printOnLCD(CREDITS);                        	// Вывод на экран приветствия и отключение после
   delay(1500);
-  CAN_LS.sendMsgBuf(LCD_ID, 1, 8, DisableLCD);  // Выключение экрана после включения
+  CAN_LS.sendMsgBuf(LCD_ID, 1, 8, DisableLCD);
 }
 
 
 void loop() {
-  buttonCheck(); 			// Функция считывания нажатия кнопки из CAN
+  buttonCheck(); 								// Функция считывания нажатия кнопки из CAN
 // Счетчик переключения страниц по нажатию кнопки RESET подрулевого переключателя 
-  if (currentPage == -1) {	// Не отправлять запросы, пока экран выключен
+  if (currentPage == -1) {						// Не отправлять запросы, пока экран выключен
     return;
   }
   currentProgTime = millis();
-  if (currentProgTime - lastParamUpdateTime < PARAMETER_UPDATE_INTERVAL) { 	// Отправки запроса не будет, пока не пройдет заданное ранее время работы программы
-    return;
+  if (currentProgTime - lastParamUpdateTime < PARAMETER_UPDATE_INTERVAL) { 	
+    return;										// Отправки запроса не будет, пока не пройдет заданное ранее время работы программы
   }
-  lastParamUpdateTime = currentProgTime; 									// Сброс счетчика времени работы программы
+  lastParamUpdateTime = currentProgTime; 		// Сброс счетчика времени работы программы
 
 // Направляем диагностический запрос в CAN_HS
   CAN_HS.sendMsgBuf(DIAG_ID, 1, 8, PAGE_COMMAND[currentPage]);
@@ -190,7 +190,7 @@ void loop() {
   diagAnswerMonitoring();
 }
 
-void shieldInit() {                                       // Функция инициализации CAN-шильдов
+void shieldInit() {                      		// Функция инициализации CAN-шильдов
 // Инициализируем по очереди оба CAN-шилда, с прописыванием их параметров: скорости и частоты кварца
   while (CAN_OK != CAN_HS.begin(MCP_STDEXT, CAN_HS_SPEED, MCP_HZ)) {
 //    Serial.println("CAN HighSpeed: Init FAIL!");
@@ -206,7 +206,7 @@ void shieldInit() {                                       // Функция ин
      CAN_HS.init_Filt(3, 1, NULL_ID);
      CAN_HS.init_Filt(4, 1, NULL_ID);
      CAN_HS.init_Filt(5, 1, NULL_ID);
-    CAN_HS.setMode(MCP_NORMAL);  // После инициализации переводим в нормальный режим (возможность и приема и передачи сообщения)
+    CAN_HS.setMode(MCP_NORMAL);  				// После инициализации переводим в нормальный режим (возможность и приема и передачи сообщения)
 
   while (CAN_OK != CAN_LS.begin(MCP_STDEXT, CAN_LS_SPEED, MCP_HZ)) {
   //    Serial.println("CAN LowSpeed: Init FAIL!");
@@ -225,46 +225,45 @@ void shieldInit() {                                       // Функция ин
     CAN_LS.setMode(MCP_NORMAL);
 }
 
-void screenEnabler() {                                            // Функция включения и очистки экрана
+void screenEnabler() {                         	// Функция включения и очистки экрана
   CAN_LS.sendMsgBuf(LCD_ID, 1, 8, EnableLCD_1);
   delay(30);
   CAN_LS.sendMsgBuf(LCD_ID, 1, 8, EnableLCD_2);
   CAN_LS.sendMsgBuf(LCD_ID, 1, 8, ClearLCD);
 }
 
-void buttonCheck() {														 	// Функция проверки нажатия кнопки RESET
+void buttonCheck() {                        	// Функция проверки нажатия кнопки RESET
   while (CAN_LS.checkReceive() == CAN_MSGAVAIL) {
     CAN_LS.readMsgBuf(&inId, &inLength, inBuffer);
-    if (!isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[4] == 0xC0)) {      // Сравниваем искомый ID и бит данных (2000-2001)
-//    if (!isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[7] == 0xBF)) {      // Сравниваем искомый ID и бит данных (рест)
+    if (!isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[4] == 0xC0)) {		// Сравниваем искомый ID и бит данных (2000-2001)
+//    if (!isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[7] == 0xBF)) {	  // Сравниваем искомый ID и бит данных (рест)
       isButtonDown = true;														// Флаг нажатой клавиши
-      buttonDownTime = millis();												 // Начало отсчета времени нажатия клавиши
+      buttonDownTime = millis();												// Начало отсчета времени нажатия клавиши
     
     } else if (isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[4] == 0x80)) {// Выполнение при отжатии клавиши (2000-2001)
 //    } else if (isButtonDown && (inId == L_SWITCH_ID) && (inBuffer[?] == 0x??)){// Выполнение при отжатии клавиши (рест - команда без нажатия кнопки неизвестна)
       isButtonDown = false;
       buttonDownTime = millis() - buttonDownTime;
     
-      if ((buttonDownTime >= LONG_PRESS_TIME) && (currentPage >= 0)) {       	// Проверка на долгое нажатие и уже включенный экран
+      if ((buttonDownTime >= LONG_PRESS_TIME) && (currentPage >= 0)) {		    // Проверка на долгое нажатие и уже включенный экран
         currentPage = -1;
-        CAN_LS.sendMsgBuf(LCD_ID, 1, 8, DisableLCD);                        	// Выключение экрана при соответствии
-        lastParamUpdateTime = millis();											// Перевод счетчика для дальнейшей работы программы в loop()
-    
-      } else if (buttonDownTime < LONG_PRESS_TIME) {					        // Проверка на короткое нажатие 
-        if (currentPage == -1) {							                    // Проверка на выключенный экран
-          screenEnabler();									                    // Включить экран и перейти на первую страницу
+        CAN_LS.sendMsgBuf(LCD_ID, 1, 8, DisableLCD);						    // Выключение экрана при соответствии											
+        lastParamUpdateTime = millis();                                         // Перевод счетчика для дальнейшей работы программы в loop()
+      } else if (buttonDownTime < LONG_PRESS_TIME) {                            // Проверка на короткое нажатие
+        if (currentPage == -1) {											    // Проверка на выключенный экран
+          screenEnabler();													    // Включить экран и перейти на первую страницу
           currentPage = 0;
-        } else {												                // Если экран уже включен, то перелистнуть страницу
+        } else {															    // Если экран уже включен, то перелистнуть страницу
           currentPage = (currentPage + 1) % PAGES_COUNT;
         }
-        lastParamUpdateTime = millis();
+        lastParamUpdateTime = millis();      
       }
     }
   }
 }
 
 
-void diagAnswerMonitoring() {                                 // Функция мониторинга CAN_HS после отправки диагностического запроса
+void diagAnswerMonitoring() {                  	// Функция мониторинга CAN_HS после отправки диагностического запроса
 // Мониторим шину на предмет наличия пакетов в ней
     while (CAN_HS.checkReceive() == CAN_MSGAVAIL) {
     CAN_HS.readMsgBuf(&inId, &inLength, inBuffer);
@@ -357,14 +356,14 @@ void diagAnswerMonitoring() {                                 // Функция 
   }
 }
 
-void printOnLCD(String input) {                                                           // Передча строки на вход функции, она переделает её под нужные пакеты и подаст на вход DIM для вывода на экран
+void printOnLCD(String input) {                	// Передча строки на вход функции, она переделает её под нужные пакеты и подаст на вход DIM для вывода на экран
   if (input.length() > 32)
-    input = "Message length  too long";                                                   // На всякий случай проверка на превышение длины сообщения
+    input = "Message length  too long";        	// На всякий случай проверка на превышение длины сообщения
 
-  while (input.length() < 32)                                                             // Заполняем сообщение до максимальных 32 символов пробелами
+  while (input.length() < 32)                   // Заполняем сообщение до максимальных 32 символов пробелами
     input += " ";
 
-  unsigned char msg[5][8] = {                                                             // Заполнение массива на вывод полного сообщения на 32 символа (2х16) в требуемом DIM'ом виде 
+  unsigned char msg[5][8] = {                   // Заполнение массива на вывод полного сообщения на 32 символа (2х16) в требуемом DIM'ом виде 
     { 0xA7, 0x00, input[0], input[1], input[2], input[3], input[4], input[5] },
     { 0x21, input[6], input[7], input[8], input[9], input[10], input[11], input[12] },
     { 0x22, input[13], input[14], input[15], input[16], input[17], input[18], input[19] },
@@ -372,11 +371,12 @@ void printOnLCD(String input) {                                                 
     { 0x65, input[27], input[28], input[29], input[30], input[31], 0x00, 0x00 }
   };
 
-  CAN_LS.sendMsgBuf(LCD_ID, 1, 8, ClearLCD);                                              // Очистка экрана перед выводом нового сообщения во избежание появления символов от предыдущего сообщения
+  CAN_LS.sendMsgBuf(LCD_ID, 1, 8, ClearLCD);	// Очистка экрана перед выводом нового сообщения во избежание появления символов от предыдущего сообщения
   delay(10);
 
-  for (int i = 0; i < 5; i++) {                                                           // Вывод сообщения на экран (из массива) с учетом задержки между пакетами в 30мс
+  for (int i = 0; i < 5; i++) {                	// Вывод сообщения на экран (из массива) с учетом задержки между пакетами в 30мс
     CAN_LS.sendMsgBuf(PHM_ID, 1, 8, msg[i]);
     delay(10);
   }
 }
+
