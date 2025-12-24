@@ -279,7 +279,7 @@ void diagAnswerMonitoring() {               // Function for monitoring CAN after
     It could slow down program execution but not very much (maybe even negligible)*/
 		  
       case 0:                                           // First page - ATF Temperature
-        resInt = 256L * String(inBuffer[6]).toInt() + inBuffer[7];
+        resInt = 256 * inBuffer[6] + inBuffer[7];
         printOnLCD(String(resInt) + " C ATF Temp");        // Display parameter with additional text on display
         break;
 
@@ -380,4 +380,5 @@ void printOnLCD(String input) {             // Send string on input to convert i
     CAN_LS.sendMsgBuf(PHM_ID, 1, 8, msg[i]);
     delay(10);
   }
+
 }
